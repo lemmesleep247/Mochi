@@ -4,6 +4,9 @@ An unofficial Android client for tracking anime & manga, backed by **MyAnimeList
 
 Mochi syncs your MAL list, lets you update progress/status/score, and discover new titles by genre — talking directly to MyAnimeList's own servers, with no third-party account or database in between.
 
+> [!WARNING]
+> **Mochi is in active development.** Expect bugs, rough edges, and breaking changes between releases — all current builds are tagged **Beta**. If something breaks or looks wrong, please [open an issue](../../issues) with what you did, what you expected, and what happened instead; screenshots/logcat help a lot. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full bug-report checklist.
+
 ---
 
 ## ✨ Features
@@ -143,6 +146,8 @@ APK output: `app/build/outputs/apk/debug/`.
 ## 🚀 Releases
 
 Pushing a tag matching `v*.*.*` (e.g. `v1.2.0`) runs `.github/workflows/release.yml`, which builds release APKs for every ABI (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) plus a universal APK, and opens a **draft** GitHub Release with all of them attached and its body filled in from the matching section of [CHANGELOG.md](CHANGELOG.md). Nothing is published automatically — review the draft and hit "Publish" yourself.
+
+The workflow can also be run manually from the Actions tab by typing a tag and picking a channel — if that tag doesn't exist yet, it's created at the current commit and pushed automatically; if it already exists, the workflow builds exactly what it points at (handy for re-running a failed build or regenerating release notes without creating a new tag). Every tag-push-triggered release is currently marked **Beta** (GitHub pre-release) by default, since the app is still in active development; a manual run lets you mark a specific build **Stable** once it's ready — this will become the default once the project matures.
 
 Release APKs are only signed if the repo has `RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`, and `RELEASE_KEY_PASSWORD` secrets configured; without them the workflow still runs and attaches unsigned APKs. An optional `MAL_CLIENT_ID` repo secret bakes a working OAuth client ID into these builds — otherwise released APKs build fine but sign-in won't work until a user supplies their own via `local.properties`, which isn't possible for a prebuilt APK.
 
