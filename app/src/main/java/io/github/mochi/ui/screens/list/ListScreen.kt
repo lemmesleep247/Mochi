@@ -4,7 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -26,8 +31,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.mochi.R
 import io.github.mochi.data.model.MediaType
 import io.github.mochi.data.model.label
 import io.github.mochi.data.model.listStatuses
@@ -50,8 +57,11 @@ fun ListScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Mochi") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        // The real bottom nav bar (MochiNavHost) already reserves its own
+        // system-bar inset; this screen only needs to reserve the top one.
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top),
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             PrimaryTabRow(selectedTabIndex = if (uiState.selectedType == MediaType.Anime) 0 else 1) {

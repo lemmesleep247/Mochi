@@ -14,6 +14,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 
 data class DiscoverPage(val items: List<MediaItem>, val hasMore: Boolean)
 
@@ -52,15 +53,14 @@ class DiscoverRepository @Inject constructor(
     }
 
     private suspend fun <T> throttled(block: suspend () -> T): T = gate.withPermit {
-        var attempt = 0
-        while (true) {
-            try {
-                return@withPermit safeCall { block() }
-            } catch (e: MochiError.RateLimited) {
-                if (attempt >= 3) throw e
-                delay(300L * (1L shl attempt))
-                attempt++
-            }
-        }
+        retryOnRateLimit(block, attempt = 0)
+    }
+
+    private suspend fun <T> retryOnRateLimit(block: suspend () -> T, attempt: Int): T = try {
+        safeCall { block() }
+    } catch (e: MochiError.RateLimited) {
+        if (attempt >= 3) throw e
+        delay((300L * (1L shl attempt)).milliseconds)
+        retryOnRateLimit(block, attempt + 1)
     }
 }

@@ -1,0 +1,13 @@
+# Copy this file to `local.properties` (which is git-ignored) and fill in the
+# values below. See the "Building from source" section of README.md for how
+# to register a MyAnimeList API client.
+
+## Location of the Android SDK. Android Studio fills this in automatically the
+## first time you open the project — you usually don't need to set it by hand.
+# sdk.dir=/path/to/Android/Sdk
+
+## Your MyAnimeList API client ID (from https://myanimelist.net/apiconfig).
+## Register the app's redirect URI there as exactly: mochi://oauth/callback
+## Do NOT put a client secret here — Mochi is a public client using PKCE and
+## only needs the client ID.
+MAL_CLIENT_ID=

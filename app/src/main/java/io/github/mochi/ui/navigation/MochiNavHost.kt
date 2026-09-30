@@ -1,18 +1,20 @@
 package io.github.mochi.ui.navigation
 
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -40,15 +42,19 @@ fun MochiNavHost(
         currentDestination.hasRoute(DiscoverRoute::class) ||
         currentDestination.hasRoute(ProfileRoute::class)
 
+    // NavigationBar already reserves its own bottom system-bar inset, and each
+    // destination's own Scaffold/TopAppBar reserves the top inset — this
+    // Scaffold owns neither, or content ends up padded for both twice over.
     Scaffold(
         modifier = modifier,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
                     NavigationBarItem(
                         selected = currentDestination?.hasRoute(ListRoute::class) == true,
                         onClick = { navController.navigateToTopLevel(ListRoute) },
-                        icon = { Icon(Icons.Filled.List, contentDescription = null) },
+                        icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                         label = { Text("My List") },
                     )
                     NavigationBarItem(
