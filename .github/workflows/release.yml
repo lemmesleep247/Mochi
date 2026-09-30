@@ -1,15 +1,32 @@
 name: Release
 
-# Push a tag like v1.2.3 to trigger this. It builds a release APK for every
-# ABI plus a universal one, and opens a DRAFT GitHub Release with all of them
-# attached — nothing is published automatically; review the draft and hit
-# "Publish" yourself. Can also be run manually (workflow_dispatch) from a tag
-# ref via the Actions tab's "Use workflow from" picker.
+# Push a tag like v1.2.3 to trigger this automatically (always treated as a
+# beta release for now — see the "channel" input below for how to change
+# that). It builds a release APK for every ABI plus a universal one, and
+# opens a DRAFT GitHub Release with all of them attached — nothing is
+# published automatically; review the draft and hit "Publish" yourself.
+#
+# Can also be run manually from the Actions tab (workflow_dispatch) against
+# an existing tag — useful for re-running a failed build or regenerating
+# release notes without pushing a new tag — and lets you pick the channel
+# explicitly.
 on:
   push:
     tags:
       - "v*.*.*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v1.2.3) — created automatically at the current commit if it doesn't exist yet"
+        required: true
+      channel:
+        description: "Release channel"
+        required: true
+        default: beta
+        type: choice
+        options:
+          - beta
+          - stable
 
 permissions:
   contents: write
@@ -20,30 +37,57 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Resolve version from tag
-        id: version
+      - name: Resolve tag, channel, and version
+        id: release
         run: |
-          TAG="${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+            CHANNEL="${{ inputs.channel }}"
+          else
+            TAG="${{ github.ref_name }}"
+            CHANNEL="beta"
+          fi
+
           if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Ref '$TAG' isn't a vX.Y.Z tag. Push a tag like v1.2.3, or run this workflow manually from one."
+            echo "::error::'$TAG' isn't a vX.Y.Z tag (e.g. v1.2.3)."
             exit 1
           fi
+
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists."
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Tag $TAG doesn't exist yet — creating it at $(git rev-parse --short HEAD)."
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "$TAG"
+            git push origin "$TAG"
+          else
+            echo "::error::Tag $TAG not found, even though this run was triggered by pushing it."
+            exit 1
+          fi
+
+          # Build exactly what the tag points at — important when re-running
+          # manually for an older tag whose commit isn't the current HEAD.
+          git checkout "$TAG"
+
           VERSION="${TAG#v}"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
           VERSION_CODE=$((MAJOR * 10000 + MINOR * 100 + PATCH))
+
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
           echo "version_name=$VERSION" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "Releasing $TAG ($CHANNEL)"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -64,14 +108,13 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           ./gradlew assembleRelease \
-            -PappVersionName="${{ steps.version.outputs.version_name }}" \
-            -PappVersionCode="${{ steps.version.outputs.version_code }}" \
+            -PappVersionName="${{ steps.release.outputs.version_name }}" \
+            -PappVersionCode="${{ steps.release.outputs.version_code }}" \
             -PmalClientId="${{ secrets.MAL_CLIENT_ID }}"
 
       - name: Extract changelog section for this version
-        id: changelog
         run: |
-          VERSION="${{ steps.version.outputs.version_name }}"
+          VERSION="${{ steps.release.outputs.version_name }}"
           if grep -q "^## \[$VERSION\]" CHANGELOG.md; then
             HEADER="## [$VERSION]"
           else
@@ -88,8 +131,9 @@ jobs:
       - name: Create draft release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Mochi ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.release.outputs.tag }}
+          name: Mochi ${{ steps.release.outputs.tag }}${{ steps.release.outputs.channel == 'beta' && ' (Beta)' || '' }}
           draft: true
+          prerelease: ${{ steps.release.outputs.channel == 'beta' }}
           body_path: release_notes.md
           files: app/build/outputs/apk/release/*.apk
