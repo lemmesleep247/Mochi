@@ -1,0 +1,25 @@
+package io.github.mochi.data.model
+
+data class MediaItem(
+    val id: Int,
+    val type: MediaType,
+    val title: String,
+    val titleEnglish: String,
+    val cover: String,
+    val synopsis: String,
+    val score: Double,
+    val rank: Int,
+    val popularity: Int,
+    val members: Int,
+    val genres: List<String>,
+    val creators: String,
+    val format: String,
+    val airStatus: String,
+    val totalUnits: Int,
+    val startYear: String,
+    val listStatus: ListStatus,
+    val progress: Int,
+    val myScore: Int,
+    val isRewatching: Boolean,
+    val inList: Boolean,
+)
