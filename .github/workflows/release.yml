@@ -107,6 +107,7 @@ jobs:
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
+          chmod +x gradlew
           ./gradlew assembleRelease \
             -PappVersionName="${{ steps.release.outputs.version_name }}" \
             -PappVersionCode="${{ steps.release.outputs.version_code }}" \
