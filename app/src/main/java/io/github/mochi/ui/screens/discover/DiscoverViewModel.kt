@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 data class DiscoverUiState(
     val type: MediaType = MediaType.Anime,
@@ -92,7 +93,7 @@ class DiscoverViewModel @Inject constructor(
     private fun search(debounce: Boolean = false) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            if (debounce) delay(400)
+            if (debounce) delay(400.milliseconds)
             val state = _uiState.value
             _uiState.update { it.copy(loading = true, error = null, page = 1) }
             runCatching { repository.search(state.type, state.query, state.selectedGenreIds.toList(), 1) }

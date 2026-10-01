@@ -66,7 +66,7 @@ class MalProfileScrapeApi @Inject constructor(
     }
 
     private suspend fun fetchProfileDocument(username: String): Document {
-        val cookie = session.cookie() ?: throw MochiError.ScrapeSessionExpired
+        val cookie = session.cookie() ?: throw MochiError.ScrapeSessionExpired()
 
         val request = Request.Builder()
             .url("https://myanimelist.net/profile/$username")
@@ -76,10 +76,10 @@ class MalProfileScrapeApi @Inject constructor(
 
         client.newCall(request).execute().use { response ->
             val finalUrl = response.request.url.toString()
-            val body = response.body?.string().orEmpty()
+            val body = response.body.string()
             // An expired/invalid cookie gets redirected to the login form.
             if (finalUrl.contains("login.php") || body.contains("id=\"loginForm\"")) {
-                throw MochiError.ScrapeSessionExpired
+                throw MochiError.ScrapeSessionExpired()
             }
             if (!response.isSuccessful) throw IOException("MAL profile scrape failed (${response.code}): $username")
             return Jsoup.parse(body, finalUrl)

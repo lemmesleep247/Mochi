@@ -55,7 +55,6 @@ class MalRepository @Inject constructor(
                 "score" to score.toString(),
             )
             service.updateListStatus(type.path, id, fields)
-            Unit
         }
     }
 

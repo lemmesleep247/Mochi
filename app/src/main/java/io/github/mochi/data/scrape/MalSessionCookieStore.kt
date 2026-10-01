@@ -23,7 +23,7 @@ private const val MAL_DOMAIN = "https://myanimelist.net"
  * the API doesn't expose at all (manga stats).
  */
 @Singleton
-class MalSessionCookieStore @Inject constructor(@ApplicationContext private val context: Context) {
+class MalSessionCookieStore @Inject constructor(@param:ApplicationContext private val context: Context) {
 
     private object Keys {
         val COOKIE = stringPreferencesKey("mal_cookie")

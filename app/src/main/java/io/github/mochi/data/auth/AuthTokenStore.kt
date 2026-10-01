@@ -14,7 +14,7 @@ import javax.inject.Singleton
 private val Context.authDataStore by preferencesDataStore("mal_auth")
 
 @Singleton
-class AuthTokenStore @Inject constructor(@ApplicationContext private val context: Context) {
+class AuthTokenStore @Inject constructor(@param:ApplicationContext private val context: Context) {
 
     private object Keys {
         val ACCESS = stringPreferencesKey("access_token")
